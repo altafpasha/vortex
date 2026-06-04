@@ -182,7 +182,7 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 **1. Get the project**
 
 ```bash
-git clone <your-repo-url> vortex-ytdl
+git clone https://github.com/altafpasha/vortex.git vortex-ytdl
 cd vortex-ytdl
 ```
 

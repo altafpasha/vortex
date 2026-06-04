@@ -1,14 +1,21 @@
 # VORTEX — Media Extractor
 > Internal YouTube downloader for content creators. Not for redistribution.
 
+## Configuration
+
+Before starting, copy the example environment file and configure your settings:
+```bash
+cp example.env .env
+```
+Open `.env` and set your `VORTEX_PASSWORD`. If left empty, the application will run without password protection (open access).
+
 ## Quick Start
 
 ```bash
-# Clone / copy this folder, then:
+# Clone / copy this folder, set up your .env, then start the containers:
 docker compose up --build -d
 
-# Open browser
-open http://localhost:8080
+# Open browser to http://localhost:8080
 ```
 
 ## Features

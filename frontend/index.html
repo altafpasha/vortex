@@ -318,9 +318,10 @@
         <div id="cookieStatus" class="cookie-status missing">⚠ NO COOKIES — BOT DETECTION ACTIVE</div>
         <input type="file" id="cookieFileInput" accept=".txt" style="display:none" onchange="uploadCookies(this)"/>
         <button class="folder-btn" onclick="document.getElementById('cookieFileInput').click()">📋 UPLOAD cookies.txt</button>
-        <button class="cookie-del-btn" id="cookieDelBtn" onclick="deleteCookies()" style="display:none">✕ REMOVE</button>
+          <button class="cookie-del-btn" id="cookieDelBtn" onclick="deleteCookies()" style="display:none">✕ REMOVE</button>
+        <button class="folder-btn" id="extDownloadBtn" onclick="downloadExtension()" title="Install once — auto-syncs every 6 hours">⬇ AUTO-SYNC EXTENSION</button>
       </div>
-      <div class="folder-hint">Export YouTube cookies using the <b>"Get cookies.txt LOCALLY"</b> Chrome/Firefox extension after signing in to YouTube, then upload the file here</div>
+      <div class="folder-hint" id="cookieHint">No cookies yet — upload manually or install the auto-sync extension (Chrome/Firefox) below</div>
     </div>
 
     <!-- Save Location -->
@@ -535,15 +536,18 @@ async function loadCookieStatus() {
     const data = await res.json();
     const el = document.getElementById('cookieStatus');
     const del = document.getElementById('cookieDelBtn');
+    const hint = document.getElementById('cookieHint');
     if (data.present) {
       const d = new Date(data.modified * 1000);
       el.className = 'cookie-status ok';
       el.textContent = `✓ COOKIES ACTIVE — Updated ${d.toLocaleDateString()}`;
       del.style.display = 'inline-block';
+      hint.textContent = 'Auto-sync extension keeps these fresh every 6 hours automatically';
     } else {
       el.className = 'cookie-status missing';
       el.textContent = '⚠ NO COOKIES — BOT DETECTION ACTIVE';
       del.style.display = 'none';
+      hint.textContent = 'Install the auto-sync extension → sign into YouTube → cookies sync automatically';
     }
   } catch {}
 }
@@ -571,6 +575,12 @@ async function uploadCookies(input) {
 async function deleteCookies() {
   await fetch('/api/cookies/delete', { method: 'DELETE', headers: ah() });
   loadCookieStatus();
+}
+
+function downloadExtension() {
+  const a = document.createElement('a');
+  a.href = '/api/extension/download';
+  a.click();
 }
 
 async function doLogin() {

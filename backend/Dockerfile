@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install -U yt-dlp
 
 COPY app.py .
+COPY extension/ ./extension/
 
 RUN mkdir -p /app/downloads
 

@@ -1,6 +1,8 @@
+import io
 import os
 import threading
 import uuid
+import zipfile
 from functools import wraps
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
@@ -445,6 +447,21 @@ def clear_all():
             count += 1
     downloads.clear()
     return jsonify({'ok': True, 'deleted': count})
+
+
+@app.route('/api/extension/download')
+@require_auth
+def download_extension():
+    ext_dir = os.path.join(os.path.dirname(__file__), 'extension')
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for fname in os.listdir(ext_dir):
+            fpath = os.path.join(ext_dir, fname)
+            if os.path.isfile(fpath):
+                zf.write(fpath, fname)
+    buf.seek(0)
+    return send_file(buf, as_attachment=True, download_name='vortex-cookie-sync.zip',
+                     mimetype='application/zip')
 
 
 @app.route('/health')

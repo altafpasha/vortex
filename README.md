@@ -8,7 +8,7 @@
 ║     ╚████╔╝ ╚██████╔╝██║  ██║   ██║   ███████╗██╔╝ ██╗     ║
 ║      ╚═══╝   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝     ║
 ║                                                              ║
-║              MEDIA EXTRACTOR  //  v3.0                       ║
+║              MEDIA EXTRACTOR  //  v3.1                       ║
 ║         Personal YouTube Downloader — Self Hosted            ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
@@ -20,6 +20,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![yt-dlp](https://img.shields.io/badge/yt--dlp-latest-FF0000?style=flat-square&logo=youtube&logoColor=white)
 ![nginx](https://img.shields.io/badge/nginx-proxy-009639?style=flat-square&logo=nginx&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-20_LTS-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![License](https://img.shields.io/badge/License-Private-red?style=flat-square)
 
 **A self-hosted, password-protected media downloader with a full dashboard UI.**  
@@ -37,6 +38,8 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [YouTube Authentication](#youtube-authentication)
+- [Auto-Sync Browser Extension](#auto-sync-browser-extension)
 - [Usage](#usage)
 - [Format Options](#format-options)
 - [Playlist Download](#playlist-download)
@@ -58,6 +61,12 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 │     • Real-time progress bar with speed + ETA display       │
 │     • 4× parallel fragment downloads for maximum speed      │
 │     • Original audio track always selected (no auto-dub)    │
+│                                                             │
+│  🤖 BOT DETECTION BYPASS                                    │
+│     • PO Token generation via bgutil-ytdlp-pot-provider     │
+│     • Multi-client fallback: web → mweb → ios → android     │
+│     • Cookie upload UI — paste or upload cookies.txt        │
+│     • Auto-Sync Extension — cookies refresh automatically   │
 │                                                             │
 │  🎛  FORMAT SUPPORT                                         │
 │     • Video  → Best Quality / 1080p / 720p / 480p / 360p   │
@@ -90,17 +99,21 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  VORTEX      MEDIA EXTRACTOR // v3.0          ● SYSTEM ONLINE   │
+│  VORTEX      MEDIA EXTRACTOR // v3.1          ● SYSTEM ONLINE   │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
 │  │ FILES        │  │ STORAGE      │  │ ACTIVE       │          │
 │  │     12       │  │   847 MB     │  │     1        │          │
 │  └──────────────┘  └──────────────┘  └──────────────┘          │
 │                                                                 │
-│  00 // SAVE LOCATION ──────────────────────────────────────     │
+│  00 // YT AUTH COOKIES ────────────────────────────────────     │
+│  [ ✓ COOKIES ACTIVE — Updated 05/06/2026 ]  [✕ REMOVE]         │
+│  [ 📋 UPLOAD cookies.txt ]  [ ⬇ AUTO-SYNC EXTENSION ]          │
+│                                                                 │
+│  01 // SAVE LOCATION ──────────────────────────────────────     │
 │  [ 📁 CHOOSE FOLDER ]   📂 Downloads  ✕                         │
 │                                                                 │
-│  01 // TARGET URL ──────────────────────────────────────── ✕    │
+│  02 // TARGET URL ──────────────────────────────────────── ✕    │
 │  ┌─────────────────────────────────────────┐ ┌───────────┐     │
 │  │  https://youtube.com/watch?v=...        │ │  ANALYZE  │     │
 │  └─────────────────────────────────────────┘ └───────────┘     │
@@ -110,7 +123,7 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 │  │ ▓▓▓▓▓  CHANNEL: Example   DURATION: 4:32   VIEWS: 2.1M  │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                                                                 │
-│  02 // SELECT FORMAT ──────────────────────────────────────     │
+│  03 // SELECT FORMAT ──────────────────────────────────────     │
 │  ┌──────────────────────────┐                                   │
 │  │  📹 VIDEO  │  🎵 AUDIO  │                                   │
 │  └──────────────────────────┘                                   │
@@ -121,11 +134,6 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │                    ⚡  EXTRACT                            │   │
 │  └──────────────────────────────────────────────────────────┘   │
-│                                                                 │
-│  03 // EXTRACTION PROGRESS ────────────────────────────────     │
-│  Video Title Here...                          [ DOWNLOADING ]   │
-│  ████████████████████░░░░░░░░░░  63.4%                          │
-│  PROGRESS: 63.4%   SPEED: 8.2 MB/s   ETA: 12s   SIZE: 248 MB   │
 │                                                                 │
 │  // LOCAL LIBRARY ──────────────────────── [ 🗑 CLEAR ALL ]     │
 │  ┌────┬────────────────────────────────┬────────┬──────────┐    │
@@ -142,25 +150,33 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 ```
                         Browser / Mobile
                               │
-                     http://HOST:8080
+                     https://vortex.codesec.me
                               │
                     ┌─────────▼──────────┐
                     │       nginx         │
                     │   (reverse proxy)   │
                     └────┬──────────┬────┘
                          │          │ /api/*
-                    ┌────▼────┐  ┌──▼───────────────────────┐
-                    │  Static │  │    Gunicorn + Flask        │
-                    │  HTML   │  │  (1 worker · 4 threads)   │
-                    └─────────┘  │                           │
-                                 │  yt-dlp  ──►  ffmpeg      │
-                                 │  in-memory download state  │
-                                 └──────────┬────────────────┘
+                    ┌────▼────┐  ┌──▼───────────────────────────┐
+                    │  Static │  │    Gunicorn + Flask            │
+                    │  HTML   │  │  (1 worker · 4 threads)       │
+                    └─────────┘  │                               │
+                                 │  yt-dlp                       │
+                                 │   ├─ bgutil PO token plugin   │
+                                 │   ├─ cookies.txt (optional)   │
+                                 │   └─► ffmpeg                  │
+                                 └──────────┬────────────────────┘
                                             │ bind mount
                                     ┌───────▼────────┐
                                     │  ./downloads/  │
                                     │  (host folder) │
                                     └────────────────┘
+
+  Chrome/Firefox (user's device)
+  ┌────────────────────────────┐
+  │  Vortex Cookie Sync ext.   │  ── auto-POST cookies ──►  /api/cookies/upload
+  │  (syncs every 6 hours)     │
+  └────────────────────────────┘
 ```
 
 ---
@@ -173,7 +189,7 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 | Docker Compose | v2 | Bundled with Docker Desktop |
 | Port `8080` | free | Configurable in `docker-compose.yml` |
 
-> **No Python, Node, or ffmpeg required on the host** — everything runs inside containers.
+> **No Python, Node, ffmpeg, or browser required on the host** — everything runs inside containers.
 
 ---
 
@@ -182,32 +198,33 @@ Download YouTube videos and playlists in any format — from laptop or mobile.
 **1. Get the project**
 
 ```bash
-git clone https://github.com/altafpasha/vortex.git vortex-ytdl
+git clone https://github.com/altafpasha/vortex-ytdl.git vortex-ytdl
 cd vortex-ytdl
 ```
 
 **2. Set your password**
 
 ```bash
-# Open .env and fill in your password
+cp example.env .env
+# Edit .env and fill in your password
 VORTEX_PASSWORD=your_secure_password_here
 ```
 
-> Leave `VORTEX_PASSWORD=` empty for open access (no login screen shown).
+> Leave `VORTEX_PASSWORD=` empty for open access (no login screen).
 
-**3. Start**
+**3. Build and start**
 
 ```bash
 docker compose up --build -d
 ```
+
+> First build takes ~3–5 minutes — it installs Node.js 20, Deno, ffmpeg, and the yt-dlp PO token plugin.
 
 **4. Open**
 
 ```
 http://localhost:8080
 ```
-
-The login screen appears automatically if a password is configured.
 
 ---
 
@@ -224,7 +241,7 @@ All settings live in `.env` at the project root:
 VORTEX_PASSWORD=your_secure_password
 ```
 
-> ⚠️ `.env` is in `.gitignore` — it is never committed to git.
+> ⚠️ `.env` is in `.gitignore` — never committed to git.
 
 ### Change the port
 
@@ -244,14 +261,108 @@ volumes:
 
 ---
 
+## YouTube Authentication
+
+Vortex v3.1 includes a multi-layer bot detection bypass:
+
+```
+Layer 1 — PO Token (automatic, no setup)
+  bgutil-ytdlp-pot-provider generates a cryptographic
+  Proof-of-Origin token for every request using Node.js.
+
+Layer 2 — Player client fallback (automatic)
+  Tries web → mweb → ios → android clients in order.
+
+Layer 3 — YouTube cookies (required for VPS/datacenter IPs)
+  Datacenter IPs are fully blocked by YouTube without a real
+  browser session. A signed-in cookies.txt resolves this.
+```
+
+### Option A — Auto-Sync Extension *(recommended, permanent)*
+
+Install the bundled browser extension once. Cookies refresh every 6 hours automatically.  
+See [Auto-Sync Browser Extension](#auto-sync-browser-extension).
+
+### Option B — Manual upload via the UI
+
+1. Install [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) in Chrome/Firefox
+2. Sign into YouTube
+3. Click the extension → **Export** → save `cookies.txt`
+4. In Vortex → `00 // YT AUTH COOKIES` → click **📋 UPLOAD cookies.txt**
+5. Status turns green: **✓ COOKIES ACTIVE**
+
+### Option C — File drop on VPS
+
+```bash
+scp cookies.txt user@your-vps:~/vortex-ytdl/downloads/cookies.txt
+docker compose restart backend
+```
+
+> Cookies expire roughly every 2 weeks. Option A refreshes them automatically — recommended for VPS deployments.
+
+---
+
+## Auto-Sync Browser Extension
+
+Vortex ships a Chrome/Firefox extension that silently keeps your YouTube cookies fresh on the server — no manual export ever needed again.
+
+### How it works
+
+```
+1. Extension runs in Chrome/Firefox on your PC or laptop
+2. When you browse YouTube while signed in, it reads your session cookies
+3. Every 6 hours it logs into Vortex and uploads a fresh cookies.txt
+4. The VPS always has valid cookies — bot detection stays bypassed forever
+```
+
+### One-time setup (~30 seconds)
+
+**Step 1 — Download**
+
+In the Vortex web UI → `00 // YT AUTH COOKIES` → click **⬇ AUTO-SYNC EXTENSION**.  
+This downloads `vortex-cookie-sync.zip`. Unzip it.
+
+**Step 2 — Install in Chrome / Edge**
+
+1. Open `chrome://extensions`
+2. Enable **Developer mode** (toggle, top right)
+3. Click **Load unpacked** → select the unzipped folder
+
+**Step 3 — Configure**
+
+1. Click the **VORTEX** extension icon in the Chrome toolbar
+2. Enter **Server URL** — e.g. `https://vortex.codesec.me`
+3. Enter **Vortex Password** — same password used to log into the web UI
+4. Click **SAVE & SYNC NOW**
+
+The popup shows **✓ Synced at ...** — done.
+
+**Install in Firefox**
+
+1. Open `about:debugging` → **This Firefox**
+2. Click **Load Temporary Add-on** → select `manifest.json` from the unzipped folder
+
+> Firefox requires re-loading temporary extensions after each browser restart. Chrome is recommended for permanent background sync.
+
+### Sync schedule
+
+| Trigger | When |
+|---------|------|
+| First install | Immediately |
+| Visiting YouTube | Every page load |
+| Background alarm | Every 6 hours |
+| Manual | Click → SAVE & SYNC NOW |
+
+---
+
 ## Usage
 
 ### Download a single video
 
 ```
-1.  Open  http://localhost:8080
+1.  Open  http://localhost:8080  (or your VPS URL)
 2.  Log in with your password
-3.  Paste a YouTube URL into the input
+3.  Paste a YouTube URL
 4.  Click  ANALYZE
 5.  Select video quality or audio format
 6.  Click  ⚡ EXTRACT
@@ -263,28 +374,23 @@ volumes:
 ```
 1.  Click  📁 CHOOSE FOLDER
 2.  Pick any folder on your computer
-3.  All downloads save there silently — no dialog each time
+3.  All downloads save there silently — no prompt each time
 ```
 
-> On **mobile**, files save to the phone's default Downloads folder automatically.  
+> On **mobile**, files save to the phone's Downloads folder automatically.  
 > Folder picker works in Chrome, Edge, and Opera on desktop.
 
 ### Access from mobile
 
-Find your computer's local IP, then open on any phone/tablet:
+Find your local IP, then open on any device:
 
 ```
 http://192.168.x.x:8080
 ```
 
-Find your IP:
-
 ```powershell
-# Windows
-ipconfig
-
-# Mac / Linux
-ip addr show
+ipconfig        # Windows
+ip addr show    # Linux / Mac
 ```
 
 ---
@@ -309,7 +415,7 @@ ip addr show
 | M4A | `.m4a` | Best available |
 | WAV | `.wav` | Lossless |
 
-> **Original audio is always used.** Auto-dubbed and dubbed tracks are excluded automatically via `language_preference >= 0` in the yt-dlp format selector.
+> **Original audio is always used.** Auto-dubbed tracks are excluded automatically via `language_preference >= 0` in the yt-dlp format selector.
 
 ---
 
@@ -320,17 +426,17 @@ ip addr show
     e.g. youtube.com/playlist?list=PLxxxxxxxx
 
 2.  Click  ANALYZE
-    → App detects the playlist and lists all video titles
+    → Playlist detected, all video titles listed
 
 3.  Select a format
 
 4.  Click  ⚡ EXTRACT PLAYLIST
-    → Live progress shows  X / total  and current video name
+    → Live progress: X / total  +  current video name
 
-5.  Files are saved to  downloads/<playlist-name>/
+5.  Files saved to  downloads/<playlist-name>/
 ```
 
-> Videos that fail within a playlist are skipped automatically — the rest continue downloading.
+> Videos that fail are skipped automatically — the rest continue.
 
 ---
 
@@ -342,7 +448,7 @@ All endpoints require the header:
 X-Auth-Token: <token>
 ```
 
-Token is returned by `/api/login`. Omit the header only for `/api/login`, `/api/auth/check`, and `/health`.
+Token is returned by `/api/login`. Omit only for `/api/login`, `/api/auth/check`, and `/health`.
 
 ### Auth
 
@@ -376,6 +482,20 @@ Token is returned by `/api/login`. Omit the header only for `/api/login`, `/api/
 | `GET` | `/api/file/direct/:name` | File (attachment) |
 | `DELETE` | `/api/file/delete/:name` | `{ ok }` |
 | `DELETE` | `/api/clear` | `{ ok, deleted }` |
+
+### Cookies
+
+| Method | Endpoint | Body | Returns |
+|--------|----------|------|---------|
+| `GET` | `/api/cookies/status` | — | `{ present, modified, size }` |
+| `POST` | `/api/cookies/upload` | `file` (multipart `.txt`) | `{ ok }` |
+| `DELETE` | `/api/cookies/delete` | — | `{ ok }` |
+
+### Extension
+
+| Method | Endpoint | Returns |
+|--------|----------|---------|
+| `GET` | `/api/extension/download` | `vortex-cookie-sync.zip` |
 
 ### Preset IDs
 
@@ -443,72 +563,62 @@ docker compose up -d       # start (no rebuild)
 
 ## Troubleshooting
 
+### "Sign in to confirm you're not a bot"
+
+YouTube blocks requests from VPS/datacenter IPs without a real browser session. Fix in order of preference:
+
+**1. Install the Auto-Sync Extension** *(permanent fix)*  
+See [Auto-Sync Browser Extension](#auto-sync-browser-extension). Cookies stay fresh automatically.
+
+**2. Upload cookies.txt manually via the UI**  
+`00 // YT AUTH COOKIES` → **📋 UPLOAD cookies.txt**  
+Export from Chrome using the "Get cookies.txt LOCALLY" extension while signed into YouTube.
+
+**3. Drop file directly on the VPS**
+```bash
+scp cookies.txt user@vps:~/vortex-ytdl/downloads/cookies.txt
+docker compose restart backend
+```
+
+> Cookies expire every ~2 weeks. The Auto-Sync Extension handles this automatically.
+
 ### "Requested format is not available"
 
-YouTube changes formats regularly. Update yt-dlp:
+Update yt-dlp to the latest nightly:
 
 ```bash
 docker compose exec backend pip install -U yt-dlp
 docker compose restart backend
 ```
 
-### "Sign in to confirm you're not a bot" / YouTube Blocks
-
-YouTube aggressively blocks automated requests. Vortex v3.0 includes several built-in countermeasures (Deno JS runtime, rate limiting, user-agent spoofing), but you may still need to provide your YouTube cookies:
-
-**Step 1 — Export your cookies**
-
-1. Install [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) in Chrome/Edge
-2. Go to `youtube.com` and sign in (use a throwaway account if possible)
-3. Click the extension icon → **Export** → save as `cookies.txt`
-
-**Step 2 — Place the file**
-
-Copy the exported `cookies.txt` into the `./downloads/` folder (which is already mounted into the container):
-
-```
-vortex-ytdl/
-├── downloads/
-│   └── cookies.txt     ← place it here
-├── docker-compose.yml
-├── .env
-└── ...
-```
-
-**Step 3 — Restart**
-
-```bash
-docker compose restart backend
-```
-
-The backend automatically detects and uses the cookies file on the next request. No rebuild needed.
-
-> ⚠️ **Important:** Cookies expire. If you start seeing bot errors again, re-export a fresh `cookies.txt`, drop it in `./downloads/`, and restart.
-
-
-
 ### Can't access from mobile / another device
 
-Allow port `8080` through your firewall:
+Allow the port through your firewall:
 
 ```powershell
 # Windows
 netsh advfirewall firewall add rule name="VORTEX" dir=in action=allow protocol=TCP localport=8080
 ```
 
-### Login page loops after entering password
+```bash
+# Linux / VPS
+ufw allow 8080/tcp
+```
 
-Clear the site's `localStorage` in browser DevTools → Application → Local Storage, then reload.
+### Login loops after entering password
+
+Clear `localStorage` in browser DevTools → Application → Local Storage → clear site data → reload.
 
 ### Download stuck at "PROCESSING / ENCODING"
 
-ffmpeg is merging video + audio streams — normal for large files. Allow 30–60 seconds before assuming failure.
+ffmpeg is merging video + audio — normal for large files. Wait 30–60 seconds before treating as failure.
 
 ### View live container logs
 
 ```bash
-docker compose logs -f backend     # backend logs
-docker compose logs -f frontend    # nginx logs
+docker compose logs -f backend     # yt-dlp output + errors
+docker compose logs -f frontend    # nginx access log
+docker compose logs -f             # all containers
 ```
 
 ---
@@ -516,18 +626,23 @@ docker compose logs -f frontend    # nginx logs
 ## Stack
 
 ```
-┌────────────────────────────────────────────────────────┐
-│  Layer           Technology          Purpose            │
-├────────────────────────────────────────────────────────┤
-│  Media download  yt-dlp (latest)     Stream extraction  │
-│  Post-process    ffmpeg              Merge · convert    │
-│  Language        Python 3.12         Backend runtime    │
-│  Framework       Flask 3.0           HTTP API           │
-│  WSGI server     Gunicorn 22         Production server  │
-│  Reverse proxy   nginx               Request routing    │
-│  Frontend        Vanilla HTML/CSS    No build step      │
-│  Containers      Docker Compose      Orchestration      │
-└────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Layer              Technology                Purpose         │
+├──────────────────────────────────────────────────────────────┤
+│  Media download     yt-dlp (latest nightly)   Stream extract │
+│  PO token gen.      bgutil-ytdlp-pot-provider  Bot bypass    │
+│  PO token bridge    yt-dlp-get-pot             Plugin API    │
+│  JS runtime         Node.js 20 LTS             bgutil engine │
+│  JS challenges      Deno                        Sig. solving  │
+│  Post-process       ffmpeg                      Merge/convert │
+│  Language           Python 3.12                Backend       │
+│  Framework          Flask 3.0                  HTTP API      │
+│  WSGI server        Gunicorn 22                Prod server   │
+│  Reverse proxy      nginx                      Routing       │
+│  Frontend           Vanilla HTML / CSS / JS    No build step │
+│  Cookie sync        Chrome/Firefox extension   Auto-refresh  │
+│  Containers         Docker Compose             Orchestration │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---

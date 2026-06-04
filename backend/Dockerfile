@@ -1,14 +1,22 @@
 FROM python:3.12-slim
 
-# Install ffmpeg for audio conversion and merging
+# Install ffmpeg for audio conversion and merging, and curl for Deno install
 RUN apt-get update && apt-get install -y \
     ffmpeg \
+    curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Deno — yt-dlp needs a JS runtime to solve YouTube's signature challenges
+RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh
 
 WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Force yt-dlp to absolute latest (nightly fixes for YouTube changes)
+RUN pip install -U yt-dlp
 
 COPY app.py .
 

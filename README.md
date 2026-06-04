@@ -454,13 +454,37 @@ docker compose restart backend
 
 ### "Sign in to confirm you're not a bot" / YouTube Blocks
 
-YouTube frequently blocks server IPs or requests that look like bots. To bypass this, you can supply your browser's cookies:
+YouTube aggressively blocks automated requests. Vortex v3.0 includes several built-in countermeasures (Deno JS runtime, rate limiting, user-agent spoofing), but you may still need to provide your YouTube cookies:
 
-1. Install a browser extension to export cookies in Netscape format (e.g., "Get cookies.txt LOCALLY" or "Cookie-Editor").
-2. Log into YouTube in your browser.
-3. Export your cookies for `.youtube.com` as a `cookies.txt` file.
-4. Place the `cookies.txt` file directly inside your host `./downloads/` folder (which maps to `/app/downloads/cookies.txt` inside the container).
-5. The backend will automatically detect and use this file for all extractions and downloads.
+**Step 1 — Export your cookies**
+
+1. Install [Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) in Chrome/Edge
+2. Go to `youtube.com` and sign in (use a throwaway account if possible)
+3. Click the extension icon → **Export** → save as `cookies.txt`
+
+**Step 2 — Place the file**
+
+Copy the exported `cookies.txt` into the `./downloads/` folder (which is already mounted into the container):
+
+```
+vortex-ytdl/
+├── downloads/
+│   └── cookies.txt     ← place it here
+├── docker-compose.yml
+├── .env
+└── ...
+```
+
+**Step 3 — Restart**
+
+```bash
+docker compose restart backend
+```
+
+The backend automatically detects and uses the cookies file on the next request. No rebuild needed.
+
+> ⚠️ **Important:** Cookies expire. If you start seeing bot errors again, re-export a fresh `cookies.txt`, drop it in `./downloads/`, and restart.
+
 
 
 ### Can't access from mobile / another device

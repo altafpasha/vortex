@@ -19,7 +19,19 @@ def get_ydl_opts(extra_opts=None):
     opts = {
         'quiet': True,
         'no_warnings': True,
+        # Rate limiting — mimic human behavior to avoid bot detection
+        'sleep_interval': 3,
+        'max_sleep_interval': 8,
+        'sleep_interval_requests': 1,
+        # Use default player client (most compatible with cookies)
+        'extractor_args': {'youtube': {'player_client': ['default']}},
+        # Spoof a real browser user-agent
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+        },
     }
+    # Auto-detect cookies.txt from multiple paths
     cookies_paths = ['/app/cookies.txt', '/app/downloads/cookies.txt']
     for cp in cookies_paths:
         if os.path.exists(cp):
@@ -28,6 +40,7 @@ def get_ydl_opts(extra_opts=None):
     if extra_opts:
         opts.update(extra_opts)
     return opts
+
 
 
 downloads = {}
@@ -219,7 +232,7 @@ def start_download():
     def run():
         try:
             ydl_opts = get_ydl_opts({
-                'format': fmt,
+                'format': preset['format'],
                 'outtmpl': os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s'),
                 'progress_hooks': [make_progress_hook(download_id)],
                 'concurrent_fragment_downloads': 4,

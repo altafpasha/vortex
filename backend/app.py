@@ -23,8 +23,8 @@ def get_ydl_opts(extra_opts=None):
         'sleep_interval': 3,
         'max_sleep_interval': 8,
         'sleep_interval_requests': 1,
-        # Use default player client (most compatible with cookies)
-        'extractor_args': {'youtube': {'player_client': ['default']}},
+        # Player client order: web uses PO token from bgutil provider; mweb/ios as fallbacks
+        'extractor_args': {'youtube': {'player_client': ['web', 'mweb', 'ios', 'android']}},
         # Spoof a real browser user-agent
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',

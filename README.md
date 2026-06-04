@@ -452,6 +452,17 @@ docker compose exec backend pip install -U yt-dlp
 docker compose restart backend
 ```
 
+### "Sign in to confirm you're not a bot" / YouTube Blocks
+
+YouTube frequently blocks server IPs or requests that look like bots. To bypass this, you can supply your browser's cookies:
+
+1. Install a browser extension to export cookies in Netscape format (e.g., "Get cookies.txt LOCALLY" or "Cookie-Editor").
+2. Log into YouTube in your browser.
+3. Export your cookies for `.youtube.com` as a `cookies.txt` file.
+4. Place the `cookies.txt` file directly inside your host `./downloads/` folder (which maps to `/app/downloads/cookies.txt` inside the container).
+5. The backend will automatically detect and use this file for all extractions and downloads.
+
+
 ### Can't access from mobile / another device
 
 Allow port `8080` through your firewall:

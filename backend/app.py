@@ -15,6 +15,21 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 VORTEX_PASSWORD = os.environ.get('VORTEX_PASSWORD', '')
 active_tokens = set()
 
+def get_ydl_opts(extra_opts=None):
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+    }
+    cookies_paths = ['/app/cookies.txt', '/app/downloads/cookies.txt']
+    for cp in cookies_paths:
+        if os.path.exists(cp):
+            opts['cookiefile'] = cp
+            break
+    if extra_opts:
+        opts.update(extra_opts)
+    return opts
+
+
 downloads = {}
 playlist_jobs = {}
 
@@ -148,7 +163,7 @@ def get_info():
         return jsonify({'error': 'URL is required'}), 400
 
     try:
-        with yt_dlp.YoutubeDL({'quiet': True, 'no_warnings': True, 'extract_flat': 'in_playlist'}) as ydl:
+        with yt_dlp.YoutubeDL(get_ydl_opts({'extract_flat': 'in_playlist'})) as ydl:
             info = ydl.extract_info(url, download=False)
 
         # ── Playlist ──
@@ -203,15 +218,12 @@ def start_download():
 
     def run():
         try:
-            fmt = preset['format']
-            ydl_opts = {
+            ydl_opts = get_ydl_opts({
                 'format': fmt,
                 'outtmpl': os.path.join(DOWNLOAD_DIR, '%(title)s.%(ext)s'),
                 'progress_hooks': [make_progress_hook(download_id)],
-                'quiet': True,
-                'no_warnings': True,
                 'concurrent_fragment_downloads': 4,
-            }
+            })
 
             if 'merge' in preset:
                 ydl_opts['merge_output_format'] = preset['merge']
@@ -281,20 +293,18 @@ def download_playlist():
                         playlist_jobs[job_id]['current'] = title
 
             # Get total count first
-            with yt_dlp.YoutubeDL({'quiet': True, 'extract_flat': True}) as ydl:
+            with yt_dlp.YoutubeDL(get_ydl_opts({'extract_flat': True})) as ydl:
                 pinfo = ydl.extract_info(url, download=False)
                 total_count[0] = len(pinfo.get('entries') or [])
                 playlist_jobs[job_id]['total'] = total_count[0]
 
-            ydl_opts = {
+            ydl_opts = get_ydl_opts({
                 'format': preset['format'],
                 'outtmpl': os.path.join(DOWNLOAD_DIR, '%(playlist_title)s/%(title)s.%(ext)s'),
                 'progress_hooks': [progress_hook],
-                'quiet': True,
-                'no_warnings': True,
                 'ignoreerrors': True,
                 'concurrent_fragment_downloads': 4,
-            }
+            })
             if 'merge' in preset:
                 ydl_opts['merge_output_format'] = preset['merge']
             if 'convert' in preset:

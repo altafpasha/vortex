@@ -67,6 +67,15 @@
     .section-label{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:4px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
     .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent)}
 
+    /* ── Cookies ── */
+    .cookies-section{margin-bottom:28px}
+    .cookies-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+    .cookie-status{font-family:var(--mono);font-size:10px;padding:9px 14px;letter-spacing:1px;flex:1;min-width:0}
+    .cookie-status.ok{background:var(--green-dim);border:1px solid rgba(0,255,136,0.25);color:var(--green)}
+    .cookie-status.missing{background:var(--red-dim);border:1px solid rgba(255,61,90,0.25);color:var(--red)}
+    .cookie-del-btn{background:transparent;border:1px solid rgba(255,61,90,.3);color:var(--red);padding:9px 14px;font-family:var(--mono);font-size:10px;letter-spacing:2px;cursor:pointer;transition:all .2s}
+    .cookie-del-btn:hover{background:var(--red-dim);border-color:var(--red)}
+
     /* ── Save location ── */
     .save-section{margin-bottom:28px}
     .save-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -302,9 +311,21 @@
       </div>
     </div>
 
+    <!-- YouTube Cookies -->
+    <div class="cookies-section">
+      <div class="section-label">00 // YT AUTH COOKIES</div>
+      <div class="cookies-row">
+        <div id="cookieStatus" class="cookie-status missing">⚠ NO COOKIES — BOT DETECTION ACTIVE</div>
+        <input type="file" id="cookieFileInput" accept=".txt" style="display:none" onchange="uploadCookies(this)"/>
+        <button class="folder-btn" onclick="document.getElementById('cookieFileInput').click()">📋 UPLOAD cookies.txt</button>
+        <button class="cookie-del-btn" id="cookieDelBtn" onclick="deleteCookies()" style="display:none">✕ REMOVE</button>
+      </div>
+      <div class="folder-hint">Export YouTube cookies using the <b>"Get cookies.txt LOCALLY"</b> Chrome/Firefox extension after signing in to YouTube, then upload the file here</div>
+    </div>
+
     <!-- Save Location -->
     <div class="save-section">
-      <div class="section-label">00 // SAVE LOCATION</div>
+      <div class="section-label">01 // SAVE LOCATION</div>
       <div class="save-row">
         <button class="folder-btn" id="folderBtn" onclick="chooseSaveFolder()">📁 CHOOSE FOLDER</button>
         <div class="folder-chip" id="folderChip">
@@ -317,7 +338,7 @@
 
     <!-- URL Input -->
     <div class="input-section">
-      <div class="section-label">01 // TARGET URL</div>
+      <div class="section-label">02 // TARGET URL</div>
       <div class="url-wrap">
         <input type="text" class="url-input" id="urlInput" placeholder="Paste YouTube URL or playlist link..." autocomplete="off" spellcheck="false" oninput="onUrlInput()" onkeydown="if(event.key==='Enter')fetchInfo()"/>
         <button class="url-clear" id="urlClearBtn" onclick="clearUrl()" title="Clear">✕</button>
@@ -504,6 +525,52 @@ function showApp() {
   const hasAuth = authToken && authToken !== 'open';
   document.getElementById('logoutBtn').style.display = hasAuth ? 'block' : 'none';
   loadLibrary();
+  loadCookieStatus();
+}
+
+// ═══ Cookies ═══
+async function loadCookieStatus() {
+  try {
+    const res = await fetch('/api/cookies/status', { headers: ah() });
+    const data = await res.json();
+    const el = document.getElementById('cookieStatus');
+    const del = document.getElementById('cookieDelBtn');
+    if (data.present) {
+      const d = new Date(data.modified * 1000);
+      el.className = 'cookie-status ok';
+      el.textContent = `✓ COOKIES ACTIVE — Updated ${d.toLocaleDateString()}`;
+      del.style.display = 'inline-block';
+    } else {
+      el.className = 'cookie-status missing';
+      el.textContent = '⚠ NO COOKIES — BOT DETECTION ACTIVE';
+      del.style.display = 'none';
+    }
+  } catch {}
+}
+
+async function uploadCookies(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch('/api/cookies/upload', {
+      method: 'POST',
+      headers: { 'X-Auth-Token': authToken },
+      body: fd,
+    });
+    const data = await res.json();
+    if (data.ok) loadCookieStatus();
+    else showError('Cookie upload failed: ' + data.error);
+  } catch (e) {
+    showError('Upload failed: ' + e.message);
+  }
+  input.value = '';
+}
+
+async function deleteCookies() {
+  await fetch('/api/cookies/delete', { method: 'DELETE', headers: ah() });
+  loadCookieStatus();
 }
 
 async function doLogin() {

@@ -165,6 +165,42 @@ def make_progress_hook(download_id):
     return hook
 
 
+# ── Cookies management ───────────────────────────────────────────────────────
+
+COOKIES_PATH = '/app/cookies.txt'
+
+@app.route('/api/cookies/status', methods=['GET'])
+@require_auth
+def cookies_status():
+    if os.path.exists(COOKIES_PATH):
+        return jsonify({
+            'present': True,
+            'modified': os.path.getmtime(COOKIES_PATH),
+            'size': os.path.getsize(COOKIES_PATH),
+        })
+    return jsonify({'present': False})
+
+
+@app.route('/api/cookies/upload', methods=['POST'])
+@require_auth
+def upload_cookies():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    f = request.files['file']
+    if not f.filename.lower().endswith('.txt'):
+        return jsonify({'error': 'Must be a .txt file'}), 400
+    f.save(COOKIES_PATH)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/cookies/delete', methods=['DELETE'])
+@require_auth
+def delete_cookies():
+    if os.path.exists(COOKIES_PATH):
+        os.remove(COOKIES_PATH)
+    return jsonify({'ok': True})
+
+
 # ── Info / analyze ────────────────────────────────────────────────────────────
 
 @app.route('/api/info', methods=['POST'])

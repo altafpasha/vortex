@@ -450,7 +450,6 @@ def clear_all():
 
 
 @app.route('/api/extension/download')
-@require_auth
 def download_extension():
     ext_dir = os.path.join(os.path.dirname(__file__), 'extension')
     buf = io.BytesIO()
